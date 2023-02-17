@@ -1,16 +1,16 @@
 package com.smushkevich.batch.config
 
-import com.smushkevich.batch.JobConfig
+import com.smushkevich.batch.Job
 
-internal data class SimpleJobConfig(
+internal data class JobConfig(
     override val jobName: String,
-    override var tasks: Set<SimpleTaskConfig> = emptySet()
-) : JobConfig {
+    override var tasks: Set<TaskConfig> = emptySet()
+) : Job {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as SimpleJobConfig
+        other as JobConfig
 
         if (jobName != other.jobName) return false
 

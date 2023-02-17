@@ -1,13 +1,13 @@
 package com.smushkevich.batch.config
 
-import com.smushkevich.batch.JobConfig
+import com.smushkevich.batch.Job
 import com.smushkevich.batch.Orchestrator
 import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 internal class SimpleJobFactory(
     private val orchestratorFactory: SimpleOrchestratorFactory,
-    private var jobConfig: SimpleJobConfig
-) : JobFactory, JobConfig by jobConfig {
+    private var jobConfig: JobConfig
+) : JobFactory, Job by jobConfig {
 
     override fun and(): SimpleOrchestratorFactory {
         orchestratorFactory.addJob(jobConfig)
@@ -20,9 +20,9 @@ internal class SimpleJobFactory(
         return this
     }
 
-    override fun task(taskName: String) = SimpleTaskFactory(this, SimpleTaskConfig(jobConfig.jobName, taskName))
+    override fun task(taskName: String) = SimpleTaskFactory(this, TaskConfig(jobConfig.jobName, taskName))
 
-    fun addTask(taskConfig: SimpleTaskConfig) {
+    fun addTask(taskConfig: TaskConfig) {
         jobConfig = jobConfig.copy(tasks = jobConfig.tasks + taskConfig)
     }
 

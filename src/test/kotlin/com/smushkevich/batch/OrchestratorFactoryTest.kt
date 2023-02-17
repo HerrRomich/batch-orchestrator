@@ -10,7 +10,7 @@ class OrchestratorFactoryTest {
         val orchestrator = OrchestratorFactory.instancs()
             .job("integration")
             .task("first-task")
-            .producable("resource1", "resource2")
+            .producible("resource1", "resource2")
             .andTask("second-task")
             .andJob("debug")
             .build()

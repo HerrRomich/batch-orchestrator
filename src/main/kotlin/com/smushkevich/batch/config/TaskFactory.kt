@@ -10,9 +10,9 @@ interface TaskFactory {
 
     fun failLevel(failLevel: FailLevel): TaskFactory
 
-    fun consumable(vararg consumable: Any): TaskFactory
+    fun consumable(vararg consumable: String): TaskFactory
 
-    fun producable(vararg producable: Any): TaskFactory
+    fun producible(vararg producible: String): TaskFactory
 
     fun runnable(runnable: () -> Unit): TaskFactory
 

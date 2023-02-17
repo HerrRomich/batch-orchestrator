@@ -2,10 +2,10 @@ package com.smushkevich.batch.config
 
 import com.smushkevich.batch.FailLevel
 import com.smushkevich.batch.Orchestrator
-import com.smushkevich.batch.TaskConfig
+import com.smushkevich.batch.Task
 
-internal class SimpleTaskFactory(private val jobFactory: SimpleJobFactory, private var taskConfig: SimpleTaskConfig) :
-    TaskFactory, TaskConfig by taskConfig {
+internal class SimpleTaskFactory(private val jobFactory: SimpleJobFactory, private var taskConfig: TaskConfig) :
+    TaskFactory, Task by taskConfig {
 
     override fun taskName(taskName: String): TaskFactory {
         taskConfig = taskConfig.copy(taskName = taskName)
@@ -22,13 +22,13 @@ internal class SimpleTaskFactory(private val jobFactory: SimpleJobFactory, priva
         return this
     }
 
-    override fun consumable(vararg consumable: Any): TaskFactory {
+    override fun consumable(vararg consumable: String): TaskFactory {
         taskConfig = taskConfig.copy(consumables = taskConfig.consumables + consumable)
         return this
     }
 
-    override fun producable(vararg producable: Any): TaskFactory {
-        taskConfig = taskConfig.copy(providables = taskConfig.providables + producable)
+    override fun producible(vararg producible: String): TaskFactory {
+        taskConfig = taskConfig.copy(providables = taskConfig.providables + producible)
         return this
     }
 

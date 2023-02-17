@@ -2,11 +2,11 @@ package com.smushkevich.batch.config
 
 import com.smushkevich.batch.Orchestrator
 import com.smushkevich.batch.OrchestratorFactory
-import com.smushkevich.batch.TaskConfig
+import com.smushkevich.batch.Task
 
 interface JobFactory {
     val jobName: String
-    val tasks: Set<TaskConfig>
+    val tasks: Set<Task>
 
     fun jobName(jobName: String): JobFactory
 

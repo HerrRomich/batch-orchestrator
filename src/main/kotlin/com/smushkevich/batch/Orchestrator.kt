@@ -2,7 +2,7 @@ package com.smushkevich.batch
 
 interface Orchestrator {
 
-    val jobs: Map<String, JobConfig>
+    val jobs: Map<String, Job>
 
     fun execute(jobName: String): JobExecution
 }

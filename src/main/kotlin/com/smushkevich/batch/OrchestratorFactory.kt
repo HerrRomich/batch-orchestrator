@@ -5,7 +5,7 @@ import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 interface OrchestratorFactory {
 
-    val jobs: Set<JobConfig>
+    val jobs: Set<Job>
 
     fun job(jobName: String): JobFactory
 
