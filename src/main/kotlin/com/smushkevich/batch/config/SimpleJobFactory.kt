@@ -1,38 +1,24 @@
 package com.smushkevich.batch.config
 
 import com.smushkevich.batch.Job
-import com.smushkevich.batch.Orchestrator
-import com.smushkevich.batch.internal.SimpleOrchestratorFactory
+import com.smushkevich.batch.OrchestratorException
+import com.smushkevich.batch.Task
 
-internal class SimpleJobFactory(
-    private val orchestratorFactory: SimpleOrchestratorFactory,
-    private var jobConfig: JobConfig
-) : JobFactory, Job by jobConfig {
+internal abstract class SimpleJobFactory<T: JobFactory<T, P>, P: TaskFactory<T, P>>(
+    protected var jobConfig: JobConfig
+): JobFactory<T, P>, Job by jobConfig {
+    protected abstract val self: T
 
-    override fun and(): SimpleOrchestratorFactory {
-        orchestratorFactory.addJob(jobConfig)
-        return orchestratorFactory
-    }
-
-    override fun jobName(jobName: String): JobFactory {
+    override fun jobName(jobName: String): T {
         jobConfig =
             jobConfig.copy(jobName = jobName, tasks = jobConfig.tasks.map { it.copy(jobName = jobName) }.toSet())
-        return this
+        return self
     }
 
-    override fun task(taskName: String) = SimpleTaskFactory(this, TaskConfig(jobConfig.jobName, taskName))
-
-    fun addTask(taskConfig: TaskConfig) {
+    override fun addTask(task: Task) {
+        jobConfig.tasks.firstOrNull { it.taskName == task.taskName }
+            ?.let { throw OrchestratorException("Task \"${task.taskName}\" already contains in JobFactory: \"${jobConfig.jobName}\"") }
+        val taskConfig = (task as? TaskConfig)?.let (TaskConfig::copy ) ?: TaskConfig(task)
         jobConfig = jobConfig.copy(tasks = jobConfig.tasks + taskConfig)
-    }
-
-    override fun andJob(jobName: String): JobFactory {
-        orchestratorFactory.addJob(jobConfig)
-        return orchestratorFactory.job(jobName)
-    }
-
-    override fun build(): Orchestrator {
-        orchestratorFactory.addJob(jobConfig)
-        return orchestratorFactory.build()
     }
 }

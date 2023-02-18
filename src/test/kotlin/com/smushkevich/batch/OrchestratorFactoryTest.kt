@@ -6,8 +6,8 @@ import kotlin.test.Test
 class OrchestratorFactoryTest {
 
     @Test
-    fun testOrchestrator() {
-        val orchestrator = OrchestratorFactory.instancs()
+    fun `test orchestrator`() {
+        val orchestrator = OrchestratorFactory.instance()
             .job("integration")
             .task("first-task")
             .producible("resource1", "resource2")

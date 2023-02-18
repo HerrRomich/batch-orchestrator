@@ -1,59 +1,51 @@
 package com.smushkevich.batch.config
 
 import com.smushkevich.batch.FailLevel
-import com.smushkevich.batch.Orchestrator
 import com.smushkevich.batch.Task
+import com.smushkevich.batch.TaskContext
 
-internal class SimpleTaskFactory(private val jobFactory: SimpleJobFactory, private var taskConfig: TaskConfig) :
-    TaskFactory, Task by taskConfig {
+internal abstract class SimpleTaskFactory<T: JobFactory<T, P>, P: TaskFactory<T, P>>(
+    protected val jobFactory: T,
+    protected var taskConfig: TaskConfig
+) : TaskFactory<T, P>,
+    Task by taskConfig {
 
-    override fun taskName(taskName: String): TaskFactory {
+    abstract protected val self: P
+
+    override fun taskName(taskName: String): P {
         taskConfig = taskConfig.copy(taskName = taskName)
-        return this
+        return self
     }
 
-    override fun priority(priority: Int): TaskFactory {
+    override fun priority(priority: Int): P {
         taskConfig = taskConfig.copy(priority = priority)
-        return this
+        return self
     }
 
-    override fun failLevel(failLevel: FailLevel): TaskFactory {
+    override fun failLevel(failLevel: FailLevel): P {
         taskConfig = taskConfig.copy(failLevel = failLevel)
-        return this
+        return self
     }
 
-    override fun consumable(vararg consumable: String): TaskFactory {
+    override fun consumable(vararg consumable: String): P {
         taskConfig = taskConfig.copy(consumables = taskConfig.consumables + consumable)
-        return this
+        return self
     }
 
-    override fun producible(vararg producible: String): TaskFactory {
+    override fun producible(vararg producible: String): P {
         taskConfig = taskConfig.copy(providables = taskConfig.providables + producible)
-        return this
+        return self
     }
 
-    override fun runnable(runnable: () -> Unit): TaskFactory {
+    override fun runnable(runnable: (context: TaskContext) -> Unit): P {
         taskConfig = taskConfig.copy(runnable = runnable)
-        return this
+        return self
     }
 
-    override fun andTask(taskName: String): TaskFactory {
+    override fun andTask(taskName: String): P {
         jobFactory.addTask(taskConfig)
         return jobFactory.task(taskName)
     }
 
-    override fun andJob(jobName: String): JobFactory {
-        jobFactory.addTask(taskConfig)
-        return jobFactory.andJob(jobName)
-    }
-
-    override fun and(): JobFactory {
-        jobFactory.addTask(taskConfig)
-        return jobFactory
-    }
-
-    override fun build(): Orchestrator {
-        jobFactory.addTask(taskConfig)
-        return jobFactory.build()
-    }
+    override fun and() = jobFactory
 }

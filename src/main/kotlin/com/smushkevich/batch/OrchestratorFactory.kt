@@ -1,19 +1,17 @@
 package com.smushkevich.batch
 
-import com.smushkevich.batch.config.JobFactory
+import com.smushkevich.batch.config.OrchestratorJobFactory
 import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 interface OrchestratorFactory {
-
     val jobs: Set<Job>
 
-    fun job(jobName: String): JobFactory
+    fun job(jobName: String): OrchestratorJobFactory
 
     fun build(): Orchestrator
 
     companion object {
         @JvmStatic
-        fun instancs(): OrchestratorFactory = SimpleOrchestratorFactory()
+        fun instance(): OrchestratorFactory = SimpleOrchestratorFactory()
     }
-
 }

@@ -1,27 +1,15 @@
 package com.smushkevich.batch.config
 
 import com.smushkevich.batch.FailLevel
-import com.smushkevich.batch.Orchestrator
+import com.smushkevich.batch.TaskContext
 
-interface TaskFactory {
-    fun taskName(taskName: String): TaskFactory
-
-    fun priority(priority: Int): TaskFactory
-
-    fun failLevel(failLevel: FailLevel): TaskFactory
-
-    fun consumable(vararg consumable: String): TaskFactory
-
-    fun producible(vararg producible: String): TaskFactory
-
-    fun runnable(runnable: () -> Unit): TaskFactory
-
-    fun andTask(taskName: String): TaskFactory
-
-    fun andJob(jobName:String): JobFactory
-
-    fun and(): JobFactory
-
-    fun build(): Orchestrator
-
+interface TaskFactory<T: JobFactory<T, P>, P: TaskFactory<T, P>> {
+    fun taskName(taskName: String): P
+    fun priority(priority: Int): P
+    fun failLevel(failLevel: FailLevel): P
+    fun consumable(vararg consumable: String): P
+    fun producible(vararg producible: String): P
+    fun runnable(runnable: (context: TaskContext) -> Unit): P
+    fun andTask(taskName: String): P
+    fun and(): T
 }

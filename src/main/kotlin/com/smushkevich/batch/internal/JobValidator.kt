@@ -3,11 +3,8 @@ package com.smushkevich.batch.internal
 import com.smushkevich.batch.Job
 import com.smushkevich.batch.OrchestratorException
 import com.smushkevich.batch.Task
-import mu.KotlinLogging
 
 object JobValidator {
-    private val logger = KotlinLogging.logger { }
-
     fun checkOrphans(job: Job) {
         val orphans = job.tasks.flatMap { it.consumables }.toSet() - job.tasks.flatMap { it.providables }.toSet()
         val orphanTasks = job.tasks.flatMap { task ->
@@ -24,8 +21,7 @@ object JobValidator {
                     messageBuilder.append(" - $consumable")
                 }
             }
-            val message = messageBuilder.toString()
-            val ex = OrchestratorException(message)
+            val ex = OrchestratorException(messageBuilder.toString())
             throw ex
         }
     }
@@ -37,18 +33,19 @@ object JobValidator {
                 val cycles = getCycles(cycleTests, cycleTest, emptyMap())
                 if (cycles != null) {
                     val messageBuilder = StringBuilder("There are cycles in graph ofjob \"${job.jobName}\":")
-                    messageBuilder.append("┌───┐")
-                    messageBuilder.append("│   ↓")
-                    messageBuilder.append("│  ${cycleTest.task.taskName}")
-                    cycles.forEach { (_, cycleTest) ->
-                        messageBuilder.append(System.lineSeparator())
-                        messageBuilder.append("│  ♦${cycleTest.task.taskName}")
-                        messageBuilder.append("│   ↓")
-                        messageBuilder.append("│  ${cycleTest.task.taskName}")
+                    messageBuilder.appendLine()
+                    messageBuilder.appendLine("      ${cycleTest.task.taskName}")
+                    messageBuilder.appendLine("┌───↴ ↓")
+                    cycles.entries.forEachIndexed { ind, (resource, cycleTest) ->
+                        if (ind > 0) {
+                            messageBuilder.appendLine("│   ↓")
+                        }
+                        messageBuilder.appendLine("│  ♦{$resource}")
+                        messageBuilder.appendLine("│   ↓")
+                        messageBuilder.appendLine("│  ${cycleTest.task.taskName}")
                     }
                     messageBuilder.append("└───┘")
-                    val message = messageBuilder.toString()
-                    val ex = OrchestratorException(message)
+                    val ex = OrchestratorException(messageBuilder.toString())
                     throw ex
                 }
 

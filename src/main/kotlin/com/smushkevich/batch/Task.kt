@@ -7,5 +7,6 @@ interface Task {
     val failLevel: FailLevel
     val consumables: Set<String>
     val providables: Set<String>
-    val runnable: () -> Unit
+
+    fun execute(context: TaskContext)
 }
