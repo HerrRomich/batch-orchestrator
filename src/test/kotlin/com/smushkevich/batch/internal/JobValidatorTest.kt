@@ -10,9 +10,9 @@ class JobValidatorTest {
     fun `check job without orphans should not fail`() {
         val job = StandaloneJobFactory.instance("test-job")
             .task("first-task")
-            .producible("test-resource")
+            .producibles("test-resource")
             .andTask("second-task")
-            .consumable("test-resource")
+            .consumables("test-resource")
             .build()
         JobValidator.checkOrphans(job)
     }
@@ -22,7 +22,7 @@ class JobValidatorTest {
         val job = StandaloneJobFactory.instance("test-job")
             .task("first-task")
             .andTask("second-task")
-            .consumable("test-resource")
+            .consumables("test-resource")
             .build()
         assertThrows<OrchestratorException> { JobValidator.checkOrphans(job) }
     }
@@ -31,13 +31,13 @@ class JobValidatorTest {
     fun `check job without cycles should not fail`() {
         val job = StandaloneJobFactory.instance("test-job")
             .task("first-task")
-            .producible("first-resource")
+            .producibles("first-resource")
             .andTask("second-task")
-            .consumable("first-resource")
-            .producible("second-resource")
+            .consumables("first-resource")
+            .producibles("second-resource")
             .andTask("third-task")
-            .consumable("second-resource")
-            .producible("third-resource")
+            .consumables("second-resource")
+            .producibles("third-resource")
             .build()
         JobValidator.checkCycles(job)
     }
@@ -46,11 +46,11 @@ class JobValidatorTest {
     fun `check job with cycles should fail`() {
         val job = StandaloneJobFactory.instance("test-job")
             .task("second-task")
-            .consumable("first-resource")
-            .producible("second-resource")
+            .consumables("first-resource")
+            .producibles("second-resource")
             .andTask("third-task")
-            .consumable("second-resource")
-            .producible("first-resource")
+            .consumables("second-resource")
+            .producibles("first-resource")
             .build()
         assertThrows<OrchestratorException> { JobValidator.checkCycles(job) }
     }
