@@ -1,6 +1,7 @@
 package com.smushkevich.batch
 
 import com.smushkevich.batch.config.OrchestratorJobFactory
+import com.smushkevich.batch.dsl.DSLOrchestratorFactory
 import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 interface OrchestratorFactory {
