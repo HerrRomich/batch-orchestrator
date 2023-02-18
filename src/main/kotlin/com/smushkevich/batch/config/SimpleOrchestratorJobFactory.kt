@@ -1,9 +1,7 @@
 package com.smushkevich.batch.config
 
-import com.smushkevich.batch.Job
 import com.smushkevich.batch.Orchestrator
 import com.smushkevich.batch.OrchestratorException
-import com.smushkevich.batch.Task
 import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 internal class SimpleOrchestratorJobFactory(

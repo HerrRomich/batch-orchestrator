@@ -10,11 +10,10 @@ class OrchestratorFactoryTest {
         val orchestrator = OrchestratorFactory.instance()
             .job("integration")
             .task("first-task")
-            .producible("resource1", "resource2")
+            .producibles("resource1", "resource2")
             .andTask("second-task")
             .andJob("debug")
             .build()
-
         SoftAssertions.assertSoftly {
             it.assertThat(orchestrator.jobs.size).isEqualTo(2)
             it.assertThat(orchestrator.jobs.keys).contains("integration")
