@@ -6,7 +6,7 @@ import com.smushkevich.batch.Task
 
 object JobValidator {
     fun checkOrphans(job: Job) {
-        val orphans = job.tasks.flatMap { it.consumables }.toSet() - job.tasks.flatMap { it.providables }.toSet()
+        val orphans = job.tasks.flatMap { it.consumables }.toSet() - job.tasks.flatMap { it.producibles }.toSet()
         val orphanTasks = job.tasks.flatMap { task ->
             task.consumables.filter { orphans.contains(it) }.map { consumable -> task to consumable }
         }.groupBy({ it.first }, { it.second })
@@ -58,7 +58,7 @@ object JobValidator {
         cycleTest: CycleTest,
         cycle: Map<String, CycleTest>
     ): Map<String, CycleTest>? {
-        var neighbors = cycleTest.task.providables.flatMap { providable ->
+        var neighbors = cycleTest.task.producibles.flatMap { providable ->
             cycleTests.flatMap { cycleTest -> cycleTest.task.consumables.map { consumable -> consumable to cycleTest } }
                 .filter { it.first == providable }
         }

@@ -8,28 +8,11 @@ import com.smushkevich.batch.dsl.DslTaskFactory
 
 internal class SimpleStandaloneTaskFactory(
     jobFactory: SimpleStandaloneJobFactory,
-    taskConfig: TaskConfig
-) : SimpleTaskFactory<StandaloneJobFactory, StandaloneTaskFactory>(jobFactory, taskConfig),
-    StandaloneTaskFactory, DslTaskFactory, Task by taskConfig {
+    taskName: String
+) : SimpleTaskFactory<StandaloneJobFactory, StandaloneTaskFactory>(jobFactory, taskName),
+    StandaloneTaskFactory {
     override val self: StandaloneTaskFactory
         get() = this
-
-    override var priority: Int
-        get() = super.priority
-        set(value) {
-            priority(value)
-        }
-
-    override var failLevel: FailLevel
-        get() = super.failLevel
-        set(value) {
-            failLevel(value)
-        }
-
-
-    override fun execute(runnable: (context: TaskContext) -> Unit) {
-        runnable(runnable)
-    }
 
     fun buildTask(): Task {
         return this.taskConfig.copy()

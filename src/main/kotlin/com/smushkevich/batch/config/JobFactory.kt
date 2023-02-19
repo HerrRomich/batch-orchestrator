@@ -2,10 +2,9 @@ package com.smushkevich.batch.config
 
 import com.smushkevich.batch.Task
 
-interface JobFactory<T: JobFactory<T, P>, P: TaskFactory<T, P>> {
-    val jobName: String
-    val tasks: Set<Task>
-    fun jobName(jobName: String): T
-    fun task(taskName: String): P
-    fun addTask(task: Task)
+interface JobFactory<J: JobFactory<J, T>, T: TaskFactory<J, T>> {
+    val name: String
+    fun name(name: String): J
+    fun task(taskName: String): T
+    fun addTask(task: Task): J
 }

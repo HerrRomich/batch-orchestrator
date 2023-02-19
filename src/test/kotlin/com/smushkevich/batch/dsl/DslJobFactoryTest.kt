@@ -10,7 +10,7 @@ class DslJobFactoryTest {
     fun `test job DSL factory`() {
         val job = job("integration") {
             task("first-task") {
-                priority = 10
+                priority(10)
                 producibles("resource1", "resource2")
             }
             task("second-task")
@@ -27,7 +27,7 @@ class DslJobFactoryTest {
         assertThrows<OrchestratorException> {
             job("integration") {
                 task("first-task") {
-                    priority = 10
+                    priority(10)
                     producibles("resource1", "resource2")
                     producibles("resource1", "resource2")
                 }

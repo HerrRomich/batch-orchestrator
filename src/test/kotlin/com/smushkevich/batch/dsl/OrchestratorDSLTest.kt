@@ -11,7 +11,7 @@ class OrchestratorDSLTest {
         val orchestrator = orchestrator {
             job("integration") {
                 task("first-task") {
-                    priority = 10
+                    priority(10)
                     producibles("resource1", "resource2")
                 }
                 task("second-task")
@@ -31,7 +31,7 @@ class OrchestratorDSLTest {
             orchestrator {
                 job("integration") {
                     task("first-task") {
-                        priority = 10
+                        priority(10)
                         producibles("resource1", "resource2")
                         producibles("resource1", "resource2")
                     }

@@ -6,8 +6,8 @@ import com.smushkevich.batch.internal.SimpleOrchestratorFactory
 
 internal class SimpleOrchestratorJobFactory(
     private val orchestratorFactory: SimpleOrchestratorFactory,
-    jobConfig: JobConfig
-) : SimpleJobFactory<OrchestratorJobFactory, OrchestratorTaskFactory>(jobConfig), OrchestratorJobFactory {
+    jobName: String
+) : SimpleJobFactory<OrchestratorJobFactory, OrchestratorTaskFactory>(jobName), OrchestratorJobFactory {
     override val self: OrchestratorJobFactory
         get() = this
 
@@ -19,7 +19,7 @@ internal class SimpleOrchestratorJobFactory(
     override fun task(taskName: String): SimpleOrchestratorTaskFactory {
         jobConfig.tasks.firstOrNull { it.taskName == taskName }
             ?.let { throw OrchestratorException("Task \"$taskName\" already contains in JobFactory: \"${jobConfig.jobName}\"") }
-        return SimpleOrchestratorTaskFactory(this, TaskConfig(jobConfig.jobName, taskName))
+        return SimpleOrchestratorTaskFactory(this, taskName)
     }
 
     override fun andJob(jobName: String): OrchestratorJobFactory {

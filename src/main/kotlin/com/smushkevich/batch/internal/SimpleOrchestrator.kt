@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture
 internal class SimpleOrchestrator(jobs: Set<Job>) : Orchestrator {
     private val logger = KotlinLogging.logger { }
 
+
     override val jobs: Map<String, Job>
     val executions = mutableSetOf<ExecutionInstance>()
 
@@ -37,6 +38,8 @@ internal class SimpleOrchestrator(jobs: Set<Job>) : Orchestrator {
             logger.error(message, ex)
             throw ex
         }
-        return ExecutionInstance(job, CompletableFuture())
+        val executionInstance = ExecutionInstance(job, CompletableFuture())
+        executions.add(executionInstance)
+        return executionInstance
     }
 }

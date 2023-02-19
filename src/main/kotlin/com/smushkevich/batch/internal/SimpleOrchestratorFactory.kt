@@ -9,20 +9,14 @@ import com.smushkevich.batch.config.SimpleStandaloneJobFactory
 import com.smushkevich.batch.dsl.DSLOrchestratorFactory
 import com.smushkevich.batch.dsl.DslJobFactory
 
-internal class SimpleOrchestratorFactory : OrchestratorFactory, DSLOrchestratorFactory {
+internal class SimpleOrchestratorFactory : OrchestratorFactory {
     override var jobs: Set<JobConfig> = emptySet()
 
-    override fun job(jobName: String) = SimpleOrchestratorJobFactory(this, JobConfig(jobName = jobName))
-
-    override fun job(jobName: String, init: DslJobFactory.() -> Unit) {
-        val factory = SimpleStandaloneJobFactory(JobConfig(jobName))
-        factory.init()
-        addJob(factory.build())
-    }
+    override fun job(jobName: String) = SimpleOrchestratorJobFactory(this, jobName)
 
     override fun build(): Orchestrator = SimpleOrchestrator(jobs)
 
-    override fun addJob(job: Job) {
+    fun addJob(job: Job) {
         val jobConfig = (job as? JobConfig)?.let (JobConfig::copy) ?: JobConfig(job)
         jobs = jobs +jobConfig
     }

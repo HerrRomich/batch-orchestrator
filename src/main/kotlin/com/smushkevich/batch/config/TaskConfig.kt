@@ -11,7 +11,7 @@ internal data class TaskConfig(
     override val priority: Int = TaskPriorities.DEFAULT,
     override val failLevel: FailLevel = FailLevel.ERROR,
     override val consumables: Set<String> = emptySet(),
-    override val providables: Set<String> = emptySet(),
+    override val producibles: Set<String> = emptySet(),
     val runnable: (context: TaskContext) -> Unit = { TODO("Task $jobName.$taskName has no runnable!") },
 ) : Task {
     constructor(task: Task) : this(
@@ -20,7 +20,7 @@ internal data class TaskConfig(
         priority = task.priority,
         failLevel = task.failLevel,
         consumables = task.consumables.toSet(),
-        providables = task.providables.toSet(),
+        producibles = task.producibles.toSet(),
         runnable = task::execute
     )
 

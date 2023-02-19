@@ -4,8 +4,8 @@ import com.smushkevich.batch.Orchestrator
 
 internal class SimpleOrchestratorTaskFactory(
     jobFactory: OrchestratorJobFactory,
-    taskConfig: TaskConfig
-) : SimpleTaskFactory<OrchestratorJobFactory, OrchestratorTaskFactory>(jobFactory, taskConfig),
+    taskName: String
+) : SimpleTaskFactory<OrchestratorJobFactory, OrchestratorTaskFactory>(jobFactory, taskName),
     OrchestratorTaskFactory {
     override val self: OrchestratorTaskFactory
         get() = this

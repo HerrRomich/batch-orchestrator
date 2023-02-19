@@ -7,7 +7,7 @@ interface StandaloneJobFactory : JobFactory<StandaloneJobFactory, StandaloneTask
 
     companion object {
         @JvmStatic
-        fun instance(jobName: String): StandaloneJobFactory = SimpleStandaloneJobFactory(JobConfig(jobName))
+        fun instance(jobName: String): StandaloneJobFactory = SimpleStandaloneJobFactory(jobName)
     }
 
 
