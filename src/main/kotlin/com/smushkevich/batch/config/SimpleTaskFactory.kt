@@ -1,6 +1,8 @@
 package com.smushkevich.batch.config
 
+import com.smushkevich.batch.Consumer
 import com.smushkevich.batch.FailLevel
+import com.smushkevich.batch.Task
 import com.smushkevich.batch.TaskContext
 
 internal abstract class SimpleTaskFactory<J : JobFactory<J, T>, T : TaskFactory<J, T>>(
@@ -35,14 +37,19 @@ internal abstract class SimpleTaskFactory<J : JobFactory<J, T>, T : TaskFactory<
         return self
     }
 
-    override fun runnable(runnable: (context: TaskContext) -> Unit): T {
+    override fun runnable(runnable: Consumer<TaskContext>): T {
         taskConfig = taskConfig.copy(runnable = runnable)
         return self
     }
 
     override fun andTask(taskName: String): T {
-        jobFactory.addTask(taskConfig)
+        jobFactory.task(taskConfig)
         return jobFactory.task(taskName)
+    }
+
+    override fun andTask(task: Task): J {
+        jobFactory.task(taskConfig)
+        return jobFactory.task(task)
     }
 
     override fun and() = jobFactory

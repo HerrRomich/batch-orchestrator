@@ -1,10 +1,7 @@
 package com.smushkevich.batch.config
 
-import com.smushkevich.batch.FailLevel
 import com.smushkevich.batch.Job
 import com.smushkevich.batch.Task
-import com.smushkevich.batch.TaskContext
-import com.smushkevich.batch.dsl.DslTaskFactory
 
 internal class SimpleStandaloneTaskFactory(
     jobFactory: SimpleStandaloneJobFactory,
@@ -19,7 +16,7 @@ internal class SimpleStandaloneTaskFactory(
     }
 
     override fun build(): Job {
-        jobFactory.addTask(taskConfig)
+        jobFactory.task(taskConfig)
         return jobFactory.build()
     }
 }

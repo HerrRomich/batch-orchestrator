@@ -1,9 +1,7 @@
-package com.smushkevich.batch
+package com.smushkevich.batch.events
 
 import java.time.LocalDateTime
 
 interface ExecutionEvent {
     val timestamp: LocalDateTime
-    val task: Task
-
 }

@@ -12,7 +12,7 @@ object JobValidator {
         }.groupBy({ it.first }, { it.second })
         if (orphanTasks.isNotEmpty()) {
             val messageBuilder =
-                StringBuilder("There are tasks in job \"${job.jobName}\", defining consumables, that are provided by other tasks:")
+                StringBuilder("There are tasks in job \"${job.jobName}\", defining consumables, that are not produced by other tasks:")
             orphanTasks.forEach { (task, consumables) ->
                 messageBuilder.append(System.lineSeparator())
                 messageBuilder.append("${task.taskName}:")
@@ -58,7 +58,7 @@ object JobValidator {
         cycleTest: CycleTest,
         cycle: Map<String, CycleTest>
     ): Map<String, CycleTest>? {
-        var neighbors = cycleTest.task.producibles.flatMap { providable ->
+        val neighbors = cycleTest.task.producibles.flatMap { providable ->
             cycleTests.flatMap { cycleTest -> cycleTest.task.consumables.map { consumable -> consumable to cycleTest } }
                 .filter { it.first == providable }
         }

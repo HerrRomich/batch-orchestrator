@@ -1,11 +1,19 @@
 package com.smushkevich.batch
 
-import io.reactivex.rxjava3.core.Observable
-import java.util.*
+import com.smushkevich.batch.events.ExecutionEvent
+import io.reactivex.rxjava3.core.Flowable
 import java.util.concurrent.Future
 
-interface JobExecution: Future<Unit> {
-    val id: UUID
-    val job: Job
-    val events: Observable<ExecutionEvent>
+/**
+ * A context of the job execution.
+ */
+interface JobExecution: JobContext, Future<Void> {
+    /**
+     * Name of job.
+     */
+    val jobName: String
+    /**
+     * An observable to all job events. Each subscriber will get all historical events replayed.
+     */
+    val events: Flowable<ExecutionEvent>
 }

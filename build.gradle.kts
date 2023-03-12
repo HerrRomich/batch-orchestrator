@@ -1,4 +1,5 @@
 plugins {
+    java
     kotlin("jvm") version "1.8.0"
 }
 
@@ -14,6 +15,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    testImplementation("org.slf4j:slf4j-simple:2.0.6")
 }
 
 tasks.test {

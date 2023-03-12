@@ -6,7 +6,7 @@ interface Job {
     val jobName: String
     val tasks: Set<Task>
 
-    fun validate(): Unit {
+    fun validate() {
         JobValidator.checkOrphans(this)
         JobValidator.checkCycles(this)
     }

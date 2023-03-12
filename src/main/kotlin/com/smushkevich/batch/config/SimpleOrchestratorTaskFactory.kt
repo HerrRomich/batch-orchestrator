@@ -11,12 +11,12 @@ internal class SimpleOrchestratorTaskFactory(
         get() = this
 
     override fun andJob(jobName: String): OrchestratorJobFactory {
-        jobFactory.addTask(taskConfig)
+        jobFactory.task(taskConfig)
         return jobFactory.andJob(jobName)
     }
 
     override fun build(): Orchestrator {
-        jobFactory.addTask(taskConfig)
+        jobFactory.task(taskConfig)
         return jobFactory.build()
     }
 }

@@ -1,9 +1,6 @@
 package com.smushkevich.batch.config
 
-import com.smushkevich.batch.FailLevel
-import com.smushkevich.batch.Task
-import com.smushkevich.batch.TaskContext
-import com.smushkevich.batch.TaskPriorities
+import com.smushkevich.batch.*
 
 internal data class TaskConfig(
     override val jobName: String,
@@ -12,7 +9,7 @@ internal data class TaskConfig(
     override val failLevel: FailLevel = FailLevel.ERROR,
     override val consumables: Set<String> = emptySet(),
     override val producibles: Set<String> = emptySet(),
-    val runnable: (context: TaskContext) -> Unit = { TODO("Task $jobName.$taskName has no runnable!") },
+    val runnable: Consumer<TaskContext> = Consumer { TODO("Task $jobName.$taskName has no runnable!") },
 ) : Task {
     constructor(task: Task) : this(
         jobName = task.jobName,
@@ -25,7 +22,7 @@ internal data class TaskConfig(
     )
 
     override fun execute(context: TaskContext) {
-        runnable(context)
+        runnable.accept(context)
     }
 
     override fun equals(other: Any?): Boolean {

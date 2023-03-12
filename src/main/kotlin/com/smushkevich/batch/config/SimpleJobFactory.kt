@@ -17,7 +17,7 @@ internal abstract class SimpleJobFactory<J: JobFactory<J, T>, T: TaskFactory<J, 
         return self
     }
 
-    override fun addTask(task: Task): J {
+    override fun task(task: Task): J {
         jobConfig.tasks.firstOrNull { it.taskName == task.taskName }
             ?.let { throw OrchestratorException("Task \"${task.taskName}\" already contains in JobFactory: \"${jobConfig.jobName}\"") }
         val taskConfig = (task as? TaskConfig)?.let (TaskConfig::copy ) ?: TaskConfig(task)

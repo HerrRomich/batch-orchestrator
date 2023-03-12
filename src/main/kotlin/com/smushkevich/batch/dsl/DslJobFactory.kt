@@ -13,7 +13,7 @@ internal class SimpleDslJobFactory(jobName: String): DslJobFactory {
     override fun task(taskName: String, init: DslTaskFactory.() -> Unit) {
         val taskFactory = SimpleDslTaskFactory(factory, taskName)
         taskFactory.init()
-        factory.addTask(taskFactory.build())
+        factory.task(taskFactory.build())
     }
 
     fun build() = factory.build()
