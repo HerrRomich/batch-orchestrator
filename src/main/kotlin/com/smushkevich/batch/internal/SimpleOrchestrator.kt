@@ -9,7 +9,7 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
 
     private val executor: ThreadPoolExecutor by lazy {
         val executor = ThreadPoolExecutor(
-            2,
+            threadPoolSize,
             threadPoolSize,
             0,
             TimeUnit.SECONDS,
@@ -45,7 +45,6 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
                 throw ex
             }
             val jobExecution = JobExecutionInstance(job)
-            jobExecution.changeState(JobExecutionState.EXECUTING)
             return@compute jobExecution
         }!!
         submit(jobExecution)
@@ -73,14 +72,21 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
     }
 
     private fun finishJob(jobExecution: JobExecutionInstance) {
+        jobExecution.queuedTaskExecutions.values
+            .forEach{
+                it.changeState(TaskExecutionState.SKIPPED)
+            }
         if (jobExecution.failedTaskCount != 0) {
-            jobExecution.changeState(JobExecutionState.ERROR)
+            jobExecution.finish(JobExecutionState.ERROR)
             jobExecution.future.completeExceptionally(OrchestratorException("Job execution is failed."))
+        } else if (jobExecution.fatalTaskCount != 0) {
+            jobExecution.finish(JobExecutionState.FATAL)
+            jobExecution.future.completeExceptionally(OrchestratorException("Job execution is fatally failed."))
         } else if (jobExecution.submittedTaskExecutions.isNotEmpty()) {
-            jobExecution.changeState(JobExecutionState.FATAL)
+            jobExecution.finish(JobExecutionState.FATAL)
             jobExecution.future.completeExceptionally(OrchestratorException("Job execution has stuck."))
         } else {
-            jobExecution.changeState(JobExecutionState.COMPLETED)
+            jobExecution.finish(JobExecutionState.COMPLETED)
             jobExecution.future.complete(null)
         }
     }
@@ -108,14 +114,16 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         submit(jobContext)
     }
 
-    private fun abortTask(taskExecution: TaskExecutionInstance) {
+    private fun cancelTask(taskExecution: TaskExecutionInstance) {
         val jobContext = taskExecution.jobContext
         synchronized(jobContext) {
-            jobContext.runningTaskCount--
-            jobContext.abortedTaskCount++
-            taskExecution.changeState(TaskExecutionState.ABORTED)
-            logStatistics(jobContext)
-            jobContext.submittedTaskExecutions.remove(taskExecution)
+            if (taskExecution.event.state == TaskExecutionState.RUNNING) {
+                jobContext.runningTaskCount--
+                jobContext.canceledTaskCount++
+                taskExecution.changeState(TaskExecutionState.CANCELED)
+                logStatistics(jobContext)
+                jobContext.submittedTaskExecutions.remove(taskExecution)
+            }
         }
         submit(jobContext)
     }
@@ -125,28 +133,41 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         synchronized(jobContext) {
             jobContext.submittedTaskExecutions.remove(taskExecution)
             jobContext.runningTaskCount--
-            jobContext.failedTaskCount++
             when (taskExecution.task.failLevel) {
                 FailLevel.WARN -> {
+                    jobContext.warnTaskCount++
                     taskExecution.changeState(TaskExecutionState.WARN)
+                    logStatistics(jobContext)
                     reorganizeGraph(taskExecution)
                 }
 
                 FailLevel.ERROR -> {
+                    jobContext.failedTaskCount++
                     taskExecution.changeState(TaskExecutionState.ERROR)
+                    logStatistics(jobContext)
                 }
 
                 FailLevel.FATAL -> {
+                    jobContext.fatalTaskCount++
                     taskExecution.changeState(TaskExecutionState.FATAL)
-                    jobContext.submittedTaskExecutions.forEach { it.future?.cancel(true) }
+                    logStatistics(jobContext)
+                    jobContext.submittedTaskExecutions.forEach {
+                        it.future?.cancel(true)
+                        if (it.event.state == TaskExecutionState.FULFILLED) {
+                            jobContext.fulfilledTaskCount--
+                            jobContext.canceledTaskCount++
+                            it.changeState(TaskExecutionState.CANCELED)
+                            logStatistics(jobContext)
+                        }
+                    }
+                    jobContext.submittedTaskExecutions.removeIf{it.event.state == TaskExecutionState.CANCELED}
                     jobContext.queuedTaskExecutions.forEach { _, taskExecution ->
-                        jobContext.canceledTaskCount++
-                        taskExecution.changeState(TaskExecutionState.CANCELED)
+                        jobContext.skippedTaskCount++
+                        taskExecution.changeState(TaskExecutionState.SKIPPED)
                     }
                     jobContext.queuedTaskExecutions.clear()
                 }
             }
-            logStatistics(jobContext)
         }
         submit(jobContext)
     }
@@ -188,7 +209,7 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
                 taskExecution.task.execute(taskExecution)
                 completeTask(taskExecution)
             } catch (e: InterruptedException) {
-                abortTask(taskExecution)
+                cancelTask(taskExecution)
             } catch (e: Exception) {
                 logger.error(e) { "Task ${taskExecution.qualfiedTaskName} is failed." }
                 failTask(taskExecution)

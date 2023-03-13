@@ -41,8 +41,10 @@ internal class JobExecutionInstance private constructor(
     var fulfilledTaskCount = 0
     var runningTaskCount = 0
     var completedTaskCount = 0
+    var warnTaskCount = 0
     var failedTaskCount = 0
-    var abortedTaskCount = 0
+    var fatalTaskCount = 0
+    var skippedTaskCount = 0
     var canceledTaskCount = 0
 
     fun changeTaskState(task: Task, state: TaskExecutionState): TaskEvent {
@@ -51,14 +53,20 @@ internal class JobExecutionInstance private constructor(
         return event
     }
 
-    fun changeState(state: JobExecutionState): JobEvent {
+    fun finish(state: JobExecutionState): JobEvent {
         val prevEvent = event
         event = JobEvent(job, state)
+        val msg = when( state) {
+            JobExecutionState.ERROR -> "is failed"
+            JobExecutionState.FATAL -> "is fatally failed"
+            JobExecutionState.COMPLETED -> "is completed"
+            else -> throw OrchestratorException("Cannot finish job with state $state.")
+        }
         events.onNext(event)
         events.onComplete()
         val duration = Duration.between(prevEvent.timestamp, event.timestamp)
         logger.info {
-            "Job '$jobName has changed state ${prevEvent.state} -> ${event.state} after ${duration.prettyPrint()}"
+            "Job '$jobName $msg after ${duration.prettyPrint()}"
         }
         return event
     }

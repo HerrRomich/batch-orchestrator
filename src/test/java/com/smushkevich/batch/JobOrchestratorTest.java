@@ -18,7 +18,9 @@ public class JobOrchestratorTest {
                 .runnable(taskExecution -> Thread.sleep(200))
                 .andTask("test-task-9")
                 .priority(TaskPriorities.HIGHER)
-                .runnable(taskExecution -> Thread.sleep(1200))
+                .producibles("test-resource-1")
+                .failLevel(FailLevel.ERROR)
+                .runnable(taskExecution -> Thread.sleep(100))
                 .andTask("test-task-2")
                 .producibles("test-resource-1")
                 .priority(TaskPriorities.HIGHER)
@@ -32,7 +34,6 @@ public class JobOrchestratorTest {
                 .runnable(taskExecution -> Thread.sleep(200))
                 .build();
         JobExecution jobExecution = orchestrator.execute("test");
-        jobExecution.getEvents().subscribe(event -> System.out.println(event.getTimestamp()));
         jobExecution.get();
     }
 }

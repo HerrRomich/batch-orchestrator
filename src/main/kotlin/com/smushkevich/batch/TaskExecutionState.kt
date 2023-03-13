@@ -9,5 +9,5 @@ enum class TaskExecutionState {
     FATAL,
     COMPLETED,
     CANCELED,
-    ABORTED
+    SKIPPED
 }
