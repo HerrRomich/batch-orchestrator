@@ -3,7 +3,7 @@ plugins {
     kotlin("jvm") version "1.8.0"
 }
 
-group = "com.herrromich"
+group = "io.github.herrromich"
 version = "0.0-SNAPSHOT"
 
 dependencies {
