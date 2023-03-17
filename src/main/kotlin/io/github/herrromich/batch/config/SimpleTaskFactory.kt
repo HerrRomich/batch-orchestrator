@@ -32,7 +32,17 @@ internal abstract class SimpleTaskFactory<J : JobFactory<J, T>, T : TaskFactory<
         return self
     }
 
+    override fun consumables(consumables: Collection<String>): T {
+        taskConfig = taskConfig.copy(consumables = taskConfig.consumables + consumables)
+        return self
+    }
+
     override fun producibles(vararg producibles: String): T {
+        taskConfig = taskConfig.copy(producibles = taskConfig.producibles + producibles)
+        return self
+    }
+
+    override fun producibles(producibles: Collection<String>): T {
         taskConfig = taskConfig.copy(producibles = taskConfig.producibles + producibles)
         return self
     }

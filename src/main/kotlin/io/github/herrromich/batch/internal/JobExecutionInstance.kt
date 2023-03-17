@@ -19,25 +19,22 @@ private val logger = KotlinLogging.logger {}
 internal class JobExecutionInstance private constructor(
     override val job: Job,
     val future: CompletableFuture<Void>
-) : JobExecution,
+) : JobContext,
     Future<Void> by future {
     constructor(job: Job) : this(job, CompletableFuture())
 
     var event: JobEvent = JobEvent(job, JobExecutionState.EXECUTING)
     override val events = ReplayProcessor.create<ExecutionEvent>().apply { onNext(event) }
     override val id = UUID.randomUUID()
-    override val jobName
-        get() = job.jobName
-
     val queuedTaskExecutions = job.tasks
-        .associateWithTo(mutableMapOf()) { task -> TaskExecutionInstance(this, task) }
+        .associateWithTo(mutableMapOf()) { task -> TaskInstance(this, task) }
     val tasksWithUncompletedConsumables = queuedTaskExecutions.map { it.key }
         .associateWithTo(mutableMapOf()) { it.consumables.toMutableSet() }
     val uncompletedProducibles = queuedTaskExecutions.asSequence().map { it.value }
         .flatMap { taskExecution -> taskExecution.task.producibles.asSequence().map { it to taskExecution } }
         .groupBy({ it.first }, { it.second })
         .mapValuesTo(mutableMapOf()) { it.value.toMutableSet() }
-    val submittedTaskExecutions = mutableSetOf<TaskExecutionInstance>()
+    val submittedTaskExecutions = mutableSetOf<TaskInstance>()
     var fulfilledTaskCount = 0
     var runningTaskCount = 0
     var completedTaskCount = 0
@@ -47,7 +44,7 @@ internal class JobExecutionInstance private constructor(
     var skippedTaskCount = 0
     var canceledTaskCount = 0
 
-    fun changeTaskState(task: Task, state: TaskExecutionState): TaskEvent {
+    fun changeTaskState(task: Task, state: TaskState): TaskEvent {
         val event = TaskEvent(task, state)
         events.onNext(event)
         return event
@@ -66,7 +63,7 @@ internal class JobExecutionInstance private constructor(
         events.onComplete()
         val duration = Duration.between(prevEvent.timestamp, event.timestamp)
         logger.info {
-            "Job '$jobName $msg after ${duration.prettyPrint()}"
+            "Job '${job.jobName} $msg after ${duration.prettyPrint()}"
         }
         return event
     }

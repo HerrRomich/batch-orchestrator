@@ -1,8 +1,8 @@
 package io.github.herrromich.batch.internal
 
 import io.github.herrromich.batch.Task
-import io.github.herrromich.batch.TaskExecution
-import io.github.herrromich.batch.TaskExecutionState
+import io.github.herrromich.batch.TaskContext
+import io.github.herrromich.batch.TaskState
 import io.github.herrromich.batch.events.TaskEvent
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.kotlin.cast
@@ -13,29 +13,27 @@ import java.util.concurrent.RunnableFuture
 
 private val logger = KotlinLogging.logger { }
 
-internal class TaskExecutionInstance(override val jobContext: JobExecutionInstance, override val task: Task) :
-    TaskExecution {
+internal class TaskInstance(override val jobContext: JobExecutionInstance, override val task: Task) :
+    TaskContext {
     var event: TaskEvent
 
     init {
         event = jobContext.changeTaskState(
             task = task,
-            state = TaskExecutionState.QUEUED
+            state = TaskState.SUBMITTED
         )
     }
 
-    override val taskName: String
-        get() = task.taskName
-    override val qualfiedTaskName: String
-        get() = "${jobContext.job.jobName}.$taskName"
-    override val state: TaskExecutionState
+    val qualfiedTaskName: String
+        get() = "${jobContext.job.jobName}.${task.taskName}"
+    override val state: TaskState
         get() = event.state
     var future: RunnableFuture<Void>? = null
     override val events: Flowable<TaskEvent> = jobContext.events.filter {
         it is TaskEvent && it.task == task
     }.cast()
 
-    fun changeState(state: TaskExecutionState): TaskEvent {
+    fun changeState(state: TaskState): TaskEvent {
         val prevEvent = event
         event = jobContext.changeTaskState(
             task = task,

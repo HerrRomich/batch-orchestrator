@@ -1,18 +1,18 @@
 package io.github.herrromich.batch.internal
 
 import io.github.herrromich.batch.*
+import io.github.herrromich.batch.spi.ExecutorProvider
 import mu.KotlinLogging
+import java.util.ServiceLoader
 import java.util.concurrent.*
 
 internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchestrator {
     private val logger = KotlinLogging.logger { }
 
-    private val executor: ThreadPoolExecutor by lazy {
-        val executor = ThreadPoolExecutor(
+    private val executor: Executor by lazy {
+        val executorProvider = EXECUTOR_SERVICE_LOADER.singleOrNull() ?: ThreadPoolExecutorProvider
+        val executor = executorProvider.provide(
             threadPoolSize,
-            threadPoolSize,
-            0,
-            TimeUnit.SECONDS,
             PriorityBlockingQueue(16)
         )
         logger.info { "Thread pool is initialized." }
@@ -23,7 +23,7 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
     override val jobs = jobs.associateBy { it.jobName }
     private val executions = ConcurrentHashMap<Job, JobExecutionInstance>()
 
-    override fun execute(jobName: String): JobExecution {
+    override fun execute(jobName: String): JobContext {
         val jobCandidate = jobs.getOrElse(jobName) {
             val message = "Job \"$jobName\" is not registered in the batch orchestrator."
             val ex = OrchestratorException(message)
@@ -55,15 +55,19 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         val fulfilledTasks = jobExecution.tasksWithUncompletedConsumables.filterValues { it.isEmpty() }.keys
             .sortedByDescending { it.priority }
         jobExecution.tasksWithUncompletedConsumables -= fulfilledTasks
-        if (fulfilledTasks.isEmpty() && jobExecution.submittedTaskExecutions.isEmpty()) {
-            finishJob(jobExecution)
+        if (fulfilledTasks.isEmpty()) {
+            if (jobExecution.submittedTaskExecutions.isEmpty()) {
+                finishJob(jobExecution)
+            }
+            return
         }
+        logger.debug { "Following tasks in job \"${jobExecution.job.jobName}\" are fulfilled: ${fulfilledTasks.map { it.taskName }}" }
         fulfilledTasks
             .forEach {
                 val taskExecution = jobExecution.queuedTaskExecutions.remove(it)!!
                 jobExecution.submittedTaskExecutions.add(taskExecution)
                 jobExecution.fulfilledTaskCount++
-                taskExecution.changeState(TaskExecutionState.FULFILLED)
+                taskExecution.changeState(TaskState.FULFILLED)
                 logStatistics(jobExecution)
                 val future = FutureTaskWithPriority(taskExecution)
                 taskExecution.future = future
@@ -73,8 +77,8 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
 
     private fun finishJob(jobExecution: JobExecutionInstance) {
         jobExecution.queuedTaskExecutions.values
-            .forEach{
-                it.changeState(TaskExecutionState.SKIPPED)
+            .forEach {
+                it.changeState(TaskState.SKIPPED)
             }
         if (jobExecution.failedTaskCount != 0) {
             jobExecution.finish(JobExecutionState.ERROR)
@@ -91,36 +95,36 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         }
     }
 
-    private fun runTask(taskExecution: TaskExecutionInstance) {
+    private fun runTask(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
         return synchronized(jobContext) {
             jobContext.runningTaskCount++
             jobContext.fulfilledTaskCount--
-            taskExecution.changeState(TaskExecutionState.RUNNING)
+            taskExecution.changeState(TaskState.RUNNING)
             logStatistics(jobContext)
         }
     }
 
-    private fun completeTask(taskExecution: TaskExecutionInstance) {
+    private fun completeTask(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
         synchronized(jobContext) {
             jobContext.submittedTaskExecutions.remove(taskExecution)
             jobContext.runningTaskCount--
             jobContext.completedTaskCount++
-            taskExecution.changeState(TaskExecutionState.COMPLETED)
+            taskExecution.changeState(TaskState.COMPLETED)
             logStatistics(jobContext)
             reorganizeGraph(taskExecution)
         }
         submit(jobContext)
     }
 
-    private fun cancelTask(taskExecution: TaskExecutionInstance) {
+    private fun cancelTask(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
         synchronized(jobContext) {
-            if (taskExecution.event.state == TaskExecutionState.RUNNING) {
+            if (taskExecution.event.state == TaskState.RUNNING) {
                 jobContext.runningTaskCount--
                 jobContext.canceledTaskCount++
-                taskExecution.changeState(TaskExecutionState.CANCELED)
+                taskExecution.changeState(TaskState.CANCELED)
                 logStatistics(jobContext)
                 jobContext.submittedTaskExecutions.remove(taskExecution)
             }
@@ -128,7 +132,7 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         submit(jobContext)
     }
 
-    private fun failTask(taskExecution: TaskExecutionInstance) {
+    private fun failTask(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
         synchronized(jobContext) {
             jobContext.submittedTaskExecutions.remove(taskExecution)
@@ -136,34 +140,34 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
             when (taskExecution.task.failLevel) {
                 FailLevel.WARN -> {
                     jobContext.warnTaskCount++
-                    taskExecution.changeState(TaskExecutionState.WARN)
+                    taskExecution.changeState(TaskState.WARN)
                     logStatistics(jobContext)
                     reorganizeGraph(taskExecution)
                 }
 
                 FailLevel.ERROR -> {
                     jobContext.failedTaskCount++
-                    taskExecution.changeState(TaskExecutionState.ERROR)
+                    taskExecution.changeState(TaskState.ERROR)
                     logStatistics(jobContext)
                 }
 
                 FailLevel.FATAL -> {
                     jobContext.fatalTaskCount++
-                    taskExecution.changeState(TaskExecutionState.FATAL)
+                    taskExecution.changeState(TaskState.FATAL)
                     logStatistics(jobContext)
                     jobContext.submittedTaskExecutions.forEach {
                         it.future?.cancel(true)
-                        if (it.event.state == TaskExecutionState.FULFILLED) {
+                        if (it.event.state == TaskState.FULFILLED) {
                             jobContext.fulfilledTaskCount--
                             jobContext.canceledTaskCount++
-                            it.changeState(TaskExecutionState.CANCELED)
+                            it.changeState(TaskState.CANCELED)
                             logStatistics(jobContext)
                         }
                     }
-                    jobContext.submittedTaskExecutions.removeIf{it.event.state == TaskExecutionState.CANCELED}
+                    jobContext.submittedTaskExecutions.removeIf { it.event.state == TaskState.CANCELED }
                     jobContext.queuedTaskExecutions.forEach { _, taskExecution ->
                         jobContext.skippedTaskCount++
-                        taskExecution.changeState(TaskExecutionState.SKIPPED)
+                        taskExecution.changeState(TaskState.SKIPPED)
                     }
                     jobContext.queuedTaskExecutions.clear()
                 }
@@ -172,13 +176,16 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         submit(jobContext)
     }
 
-    private fun reorganizeGraph(taskExecution: TaskExecutionInstance) {
+    private fun reorganizeGraph(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
         synchronized(jobContext) {
             jobContext.uncompletedProducibles.forEach { _, tasks ->
                 tasks.remove(taskExecution)
             }
-            val completedProducibles = jobContext.uncompletedProducibles.filterValues(Set<TaskExecution>::isEmpty).keys
+            val completedProducibles = jobContext.uncompletedProducibles.filterValues(Set<TaskInstance>::isEmpty).keys
+            if (completedProducibles.isNotEmpty()) {
+                logger.debug { "Following resources of job ${jobContext.job.jobName} have been fulfilled: $completedProducibles" }
+            }
             jobContext.uncompletedProducibles -= completedProducibles
             jobContext.tasksWithUncompletedConsumables.forEach { _, consumables ->
                 consumables -= completedProducibles
@@ -188,31 +195,40 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
 
     private fun logStatistics(jobExecution: JobExecutionInstance) {
         logger.info {
-            "Job '${jobExecution.jobName}' statistics: " +
+            "Job '${jobExecution.job.jobName}' statistics: " +
                     "fulfilled -> ${jobExecution.fulfilledTaskCount}; " +
                     "running -> ${jobExecution.runningTaskCount}; " +
                     "done -> ${jobExecution.completedTaskCount} / ${jobExecution.job.tasks.count()}"
         }
     }
 
-    inner class FutureTaskWithPriority(private val taskExecution: TaskExecutionInstance) :
+    inner class FutureTaskWithPriority(private val taskExecution: TaskInstance) :
         FutureTask<Void>(TaskRunnable(taskExecution), null),
         Comparable<FutureTaskWithPriority> {
         override fun compareTo(other: FutureTaskWithPriority) =
             taskExecution.task.priority - other.taskExecution.task.priority
     }
 
-    inner class TaskRunnable(private val taskExecution: TaskExecutionInstance) : Runnable {
+    inner class TaskRunnable(private val taskInstance: TaskInstance) : Runnable {
         override fun run() {
             try {
-                runTask(taskExecution)
-                taskExecution.task.execute(taskExecution)
-                completeTask(taskExecution)
+                runTask(taskInstance)
+                taskInstance.task.execute(taskInstance)
+                completeTask(taskInstance)
             } catch (e: InterruptedException) {
-                cancelTask(taskExecution)
+                cancelTask(taskInstance)
             } catch (e: Exception) {
-                logger.error(e) { "Task ${taskExecution.qualfiedTaskName} is failed." }
-                failTask(taskExecution)
+                logger.error(e) { "Task ${taskInstance.qualfiedTaskName} is failed." }
+                failTask(taskInstance)
+            }
+        }
+    }
+
+    companion object {
+        val EXECUTOR_SERVICE_LOADER = ServiceLoader.load(ExecutorProvider::class.java).apply {
+            reload()
+            if (count() > 1) {
+                throw OrchestratorException("There are more then one registered ${ExecutorProvider::class.java} classes.")
             }
         }
     }

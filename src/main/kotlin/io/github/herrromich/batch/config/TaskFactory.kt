@@ -10,7 +10,9 @@ interface TaskFactory<J: JobFactory<J, T>, T: TaskFactory<J, T>> {
     fun priority(priority: Int): T
     fun failLevel(failLevel: FailLevel): T
     fun consumables(vararg consumables: String): T
+    fun consumables(consumables: Collection<String>): T
     fun producibles(vararg producibles: String): T
+    fun producibles(producibles: Collection<String>): T
     fun runnable(runnable: Consumer<TaskContext>): T
     fun andTask(taskName: String): T
     fun andTask(task: Task): J

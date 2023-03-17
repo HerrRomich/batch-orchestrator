@@ -11,7 +11,7 @@ object TaskPriorities {
     const val HIGHER = 1000
     const val HIGHEST = 2000
     const val CRITICAL = 5000
-    @JvmField
-    val DEFAULT = NORMAL
+
+    const val DEFAULT = NORMAL
 
 }

@@ -3,8 +3,11 @@ package io.github.herrromich.batch.internal
 import io.github.herrromich.batch.Job
 import io.github.herrromich.batch.OrchestratorException
 import io.github.herrromich.batch.Task
+import kotlin.jvm.Throws
 
 object JobValidator {
+
+    @Throws(OrchestratorException::class)
     fun checkOrphans(job: Job) {
         val orphans = job.tasks.flatMap { it.consumables }.toSet() - job.tasks.flatMap { it.producibles }.toSet()
         val orphanTasks = job.tasks.flatMap { task ->
@@ -26,6 +29,7 @@ object JobValidator {
         }
     }
 
+    @Throws(OrchestratorException::class)
     fun checkCycles(job: Job) {
         val cycleTests = job.tasks.map(::CycleTest)
         cycleTests.forEach { cycleTest ->
