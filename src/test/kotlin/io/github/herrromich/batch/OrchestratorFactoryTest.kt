@@ -6,7 +6,7 @@ import kotlin.test.Test
 class OrchestratorFactoryTest {
 
     @Test
-    fun `test orchestrator`() {
+    fun `test orchestrator factory`() {
         val orchestrator = OrchestratorFactory.instance()
             .job("integration")
             .task("first-task")
