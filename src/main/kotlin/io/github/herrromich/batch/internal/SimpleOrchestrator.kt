@@ -33,7 +33,7 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
         val jobExecution = executions.compute(jobCandidate) { job, execution ->
             if (execution != null) {
                 val message =
-                    "Job \"$jobName\" is running right now! It is ot allowed to have multiple executions of same job."
+                    "Job \"$jobName\" is running right now! It is ot allowed to have multiple executions of the same job at the same time."
                 val ex = OrchestratorException(message)
                 logger.error(message, ex)
                 throw ex
@@ -75,25 +75,34 @@ internal class SimpleOrchestrator(threadPoolSize: Int, jobs: Set<Job>) : Orchest
             }
     }
 
-    private fun finishJob(jobExecution: JobExecutionInstance) {
-        jobExecution.queuedTaskExecutions.values
-            .forEach {
-                it.changeState(TaskState.SKIPPED)
+    private fun finishJob(jobExecution: JobExecutionInstance) =
+        executions.compute(jobExecution.job) { job, execution ->
+            if (execution == null) {
+                val message =
+                    "Fatal error. Unknown job execution $jobExecution."
+                val ex = OrchestratorException(message)
+                logger.error(message, ex)
+                throw ex
             }
-        if (jobExecution.failedTaskCount != 0) {
-            jobExecution.finish(JobExecutionState.ERROR)
-            jobExecution.future.completeExceptionally(OrchestratorException("Job execution is failed."))
-        } else if (jobExecution.fatalTaskCount != 0) {
-            jobExecution.finish(JobExecutionState.FATAL)
-            jobExecution.future.completeExceptionally(OrchestratorException("Job execution is fatally failed."))
-        } else if (jobExecution.submittedTaskExecutions.isNotEmpty()) {
-            jobExecution.finish(JobExecutionState.FATAL)
-            jobExecution.future.completeExceptionally(OrchestratorException("Job execution has stuck."))
-        } else {
-            jobExecution.finish(JobExecutionState.COMPLETED)
-            jobExecution.future.complete(null)
+            execution.queuedTaskExecutions.values
+                .forEach {
+                    it.changeState(TaskState.SKIPPED)
+                }
+            if (execution.failedTaskCount != 0) {
+                execution.finish(JobExecutionState.ERROR)
+                execution.future.completeExceptionally(OrchestratorException("Job execution is failed."))
+            } else if (execution.fatalTaskCount != 0) {
+                execution.finish(JobExecutionState.FATAL)
+                execution.future.completeExceptionally(OrchestratorException("Job execution is fatally failed."))
+            } else if (execution.submittedTaskExecutions.isNotEmpty()) {
+                execution.finish(JobExecutionState.FATAL)
+                execution.future.completeExceptionally(OrchestratorException("Job execution has stuck."))
+            } else {
+                execution.finish(JobExecutionState.COMPLETED)
+                execution.future.complete(null)
+            }
+            return@compute null
         }
-    }
 
     private fun runTask(taskExecution: TaskInstance) {
         val jobContext = taskExecution.jobContext
