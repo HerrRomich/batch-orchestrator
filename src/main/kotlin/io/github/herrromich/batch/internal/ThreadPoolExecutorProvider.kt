@@ -8,8 +8,8 @@ internal object ThreadPoolExecutorProvider : ExecutorProvider {
         ThreadPoolExecutor(
             threadPoolSize,
             threadPoolSize,
-            0,
-            TimeUnit.SECONDS,
+            1,
+            TimeUnit.MINUTES,
             workQueue
         )
 }
