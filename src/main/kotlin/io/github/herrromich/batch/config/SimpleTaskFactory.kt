@@ -62,5 +62,8 @@ internal abstract class SimpleTaskFactory<J : JobFactory<J, T>, T : TaskFactory<
         return jobFactory.task(task)
     }
 
-    override fun and() = jobFactory
+    override fun and(): J {
+        jobFactory.task(taskConfig)
+        return jobFactory
+    }
 }
