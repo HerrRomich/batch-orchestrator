@@ -24,7 +24,7 @@ enum class TaskState {
     /**
      * The task is failed with the [FailLevel.WARN].
      *
-     * The job won't be interrupted and will be ended with state [JobExecutionState.COMPLETED]
+     * The job won't be interrupted and will be ended with state [JobState.COMPLETED]
      */
     WARN,
 
@@ -33,7 +33,7 @@ enum class TaskState {
      *
      * The job won't be interrupted until all fulfilled tasks are done.
      *
-     * The job will be ended with state [JobExecutionState.ERROR]
+     * The job will be ended with state [JobState.ERROR]
      */
     ERROR,
 
@@ -46,7 +46,7 @@ enum class TaskState {
      *
      * All running tasks will be immediately canceled.
      *
-     * The job will be ended with state [JobExecutionState.ERROR]
+     * The job will be ended with state [JobState.ERROR]
      */
     FATAL,
 

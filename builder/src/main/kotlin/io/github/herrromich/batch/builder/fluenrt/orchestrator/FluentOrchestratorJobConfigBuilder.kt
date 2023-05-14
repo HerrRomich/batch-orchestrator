@@ -1,0 +1,3 @@
+package io.github.herrromich.batch.builder.fluenrt.orchestrator
+
+interface FluentOrchestratorJobConfigBuilder : FluentOrchestratorJobInterfaceBuilder, FluentOrchestratorJobBuilder

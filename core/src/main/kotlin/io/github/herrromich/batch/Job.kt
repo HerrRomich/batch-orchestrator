@@ -1,18 +1,20 @@
 package io.github.herrromich.batch
 
-import io.github.herrromich.batch.internal.JobValidator
-
+/**
+ * Job definition.
+ * Contains of tasks.
+ * Tasks should build a directed acyclic graph,
+ * according to its consumable and producible resources.
+ */
 interface Job {
-    val jobName: String
+    /**
+     * Name of job.
+     * Should be unique in orchestrator.
+     */
+    val name: String
+
+    /**
+     * List of tasks, building a complete job.
+     */
     val tasks: Set<Task>
-
-    fun validate() {
-        val duplicates = tasks.groupBy(Task::name).filter { it.value.size > 1 }.toMap()
-        if (duplicates.isNotEmpty()) {
-            throw OrchestratorException("There ara tasks with duplicated names: $duplicates")
-        }
-        JobValidator.checkOrphans(this)
-        JobValidator.checkCycles(this)
-    }
-
 }

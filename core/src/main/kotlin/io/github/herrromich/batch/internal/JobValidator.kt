@@ -14,7 +14,7 @@ object JobValidator {
         }.groupBy({ it.first }, { it.second })
         if (orphanTasks.isNotEmpty()) {
             val messageBuilder =
-                StringBuilder("There are tasks in job \"${job.jobName}\", defining consumables, that are not produced by other tasks:")
+                StringBuilder("There are tasks in job \"${job.name}\", defining consumables, that are not produced by other tasks:")
             orphanTasks.forEach { (task, consumables) ->
                 messageBuilder.append(System.lineSeparator())
                 messageBuilder.append("${task.name}:")
@@ -35,10 +35,11 @@ object JobValidator {
             if (!cycleTest.visited) {
                 val cycles = getCycles(cycleTests, cycleTest, emptyMap())
                 if (cycles != null) {
-                    val messageBuilder = StringBuilder("There are cycles in graph ofjob \"${job.jobName}\":")
+                    val messageBuilder = StringBuilder("There are cycles in graph of job \"${job.name}\":")
                     messageBuilder.appendLine()
                     messageBuilder.appendLine("      ${cycleTest.task.name}")
-                    messageBuilder.appendLine("┌───↴ ↓")
+                    messageBuilder.appendLine("┌───┐ ↓")
+                    messageBuilder.appendLine("│   ↓")
                     cycles.entries.forEachIndexed { ind, (resource, cycleTest) ->
                         if (ind > 0) {
                             messageBuilder.appendLine("│   ↓")
@@ -56,7 +57,7 @@ object JobValidator {
         }
     }
 
-    private fun getCycles(
+    private fun  getCycles(
         cycleTests: List<CycleTest>,
         cycleTest: CycleTest,
         cycle: Map<String, CycleTest>

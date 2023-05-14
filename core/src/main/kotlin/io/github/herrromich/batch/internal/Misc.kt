@@ -1,3 +1,5 @@
+package io.github.herrromich.batch.internal
+
 import java.time.Duration
 
 internal fun Duration?.prettyPrint(): String {

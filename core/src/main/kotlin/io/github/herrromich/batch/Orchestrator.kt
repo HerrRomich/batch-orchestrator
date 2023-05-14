@@ -1,7 +1,6 @@
 package io.github.herrromich.batch
 
-import io.github.herrromich.batch.internal.SimpleOrchestrator
-import java.util.concurrent.Executor
+import java.util.*
 
 /**
  * Batch orchestrator.
@@ -20,11 +19,28 @@ interface Orchestrator {
      *
      * @throws OrchestratorException if job is invalid or already executing.
      */
-    @Throws( OrchestratorException::class)
+    @Throws(OrchestratorException::class)
     fun execute(jobName: String): JobContext
 
     companion object {
+        private val ORCHESTRATOR_PROVIDER: OrchestratorProvider by lazy {
+            ServiceLoader.load(OrchestratorProvider::class.java).run {
+                reload()
+                try {
+                    single()
+                } catch (e: NoSuchElementException) {
+                    throw OrchestratorException("There are no registered classes of interface \"${OrchestratorProvider::class.java.name}\".")
+                } catch (e: IllegalArgumentException) {
+                    throw OrchestratorException("There are more then one registered ${OrchestratorProvider::class.java.name} classes.")
+                }
+            }
+        }
+
+        /**
+         * Instantiate an orchestrator of a registered type.
+         */
         @JvmStatic
-        fun instance(executor: Executor, jobs: Set<Job>): Orchestrator = SimpleOrchestrator(executor, jobs)
+        fun instance(jobs: Set<Job>, configuration: OrchestratorConfiguration) =
+            ORCHESTRATOR_PROVIDER.provideOrchestrator(jobs, configuration)
     }
 }

@@ -1,7 +1,9 @@
 package io.github.herrromich.batch
 
+/**
+ * Predefined task priorities.
+ */
 object TaskPriorities {
-
     const val UNIMPORTANT = 0
     const val LOWEST = 10
     const val LOWER = 20
@@ -12,12 +14,13 @@ object TaskPriorities {
     const val HIGHEST = 2000
     const val CRITICAL = 5000
 
-    val DEFAULT: Int by lazy {
-        try {
+    @JvmStatic
+    val DEFAULT: Int
+        @JvmName("DEFAULT")
+        get() = try {
             System.getProperty("defaultTaskPriority")?.toInt()
         } catch (e: Exception) {
             null
         } ?: NORMAL
-    }
 
 }

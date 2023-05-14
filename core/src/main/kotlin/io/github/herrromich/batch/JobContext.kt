@@ -1,12 +1,11 @@
 package io.github.herrromich.batch
 
 import java.util.*
-import java.util.concurrent.Future
 
 /**
  * Context of running job.
  */
-interface JobContext: Future<Void> {
+interface JobContext {
     /**
      * A unique identifier of job execution.
      */
@@ -16,4 +15,8 @@ interface JobContext: Future<Void> {
      * Reference to the job definition.
      */
     val job: Job
+
+    fun getExecutionStatisticsSnapshot(): JobExecutionStatistics
+
+    fun join()
 }

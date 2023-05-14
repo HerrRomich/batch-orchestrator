@@ -16,7 +16,7 @@ interface TaskContext {
     val task: Task
 
     /**
-     * Current task state
+     * Changes progress of executing task
      */
-    val state: TaskState
+    fun setProgress(progress: Double)
 }

@@ -1,9 +1,20 @@
 package io.github.herrromich.batch.events
 
 import io.github.herrromich.batch.Job
-import io.github.herrromich.batch.JobExecutionState
-import java.time.LocalDateTime
+import io.github.herrromich.batch.JobState
 
-data class JobEvent(val job: Job, val state: JobExecutionState) : ExecutionEvent {
-    override val timestamp: LocalDateTime = LocalDateTime.now()
+/**
+ * A job execution event.
+ */
+interface JobEvent
+ : ExecutionEvent {
+    /**
+     * A reference to a job to which an event bolongs.
+     */
+    val job: Job
+
+    /**
+     * A state of job to which it comes by this event.
+     */
+    val state: JobState
 }
