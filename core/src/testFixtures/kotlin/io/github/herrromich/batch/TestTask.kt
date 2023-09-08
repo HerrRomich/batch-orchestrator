@@ -14,6 +14,6 @@ abstract class TestTask(override val name: String) : Task {
     override val producibles: Set<String>
         get() = emptySet()
     override fun execute(context: TaskContext) {
-        logger.info { "Executiong test task: \"${name}\"" }
+        logger.info { "Executing test task: \"${name}\"" }
     }
 }

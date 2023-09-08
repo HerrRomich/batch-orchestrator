@@ -1,2 +1,2 @@
 # batch-orchestrator
-Resource-driven oprchestrator of batch processing based
+Resource-driven orchestrator of batch processing based
